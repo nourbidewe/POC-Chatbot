@@ -50,56 +50,20 @@ def RAG(query):
 
 def main():
     st.title("POC Chatbot")
-    # query_input = st.text_input("Enter your question:")
-    # print(query_input)
-    # if query_input:
-    #     response = RAG(query_input)
-    #     st.write(response)
-
-    #  # Initialize or update the history in session state
-    # if 'qna_history' not in st.session_state:
-    #     st.session_state['qna_history'] = []
-
-    # # Display the history of Q&A on top if there are previous Q&As
-    # if st.session_state['qna_history']:
-    #     for q, a in reversed(st.session_state['qna_history']):
-    #         st.write(f"POC: {q}")
-    #         st.write(f"User: {a}")
-    #         st.write("-----------------------------")  # Just a separator for readability
-
-    # # Using a form for the input and submit button
-    # with st.form("question_form"):
-    #     query_input = st.text_input("Enter your question:", key="query")
-    #     submit_button = st.form_submit_button('Submit')
-
-    # if submit_button and query_input:
-    #     # Call the RAG function to get a response for the input question
-    #     response = RAG(query_input)
-        
-    #     # Append the question and response to the history
-    #     st.session_state['qna_history'].append((query_input, response))
-
-    #     # Reset the input field by clearing the session state key for the query
-    #     st.session_state['query'] = ""
-
-    #     # Display the latest Q&A at the top by re-running the app
-    #     st.experimental_rerun()
-    
-    # Initialize or update the history in session state
     if 'qna_history' not in st.session_state:
         st.session_state['qna_history'] = []
 
     # Display the history of Q&A on top if there are previous Q&As
     if st.session_state['qna_history']:
         for q, a in reversed(st.session_state['qna_history']):
-            st.write(f"POC: {q}")
-            st.write(f"User: {a}")
+            st.write(f"User Question\n: {q}")
+            st.write(f"POC Chatbot\n: {a}")
             st.write("-----------------------------")  # Just a separator for readability
 
     # Using a form for the input and submit button
-    form = st.form(key='question_form')
-    query_input = form.text_input("Enter your question:", key="query_input")
-    submit_button = form.form_submit_button('Submit')
+    with st.form(key='question_form'):
+        query_input = st.text_input("Enter your question:", '', key="query_input")
+        submit_button = st.form_submit_button('Submit')
 
     if submit_button and query_input:
         # Call the RAG function to get a response for the input question
@@ -107,6 +71,15 @@ def main():
         
         # Append the question and response to the history
         st.session_state['qna_history'].append((query_input, response))
+
+        # Indicate that a rerun is needed to clear the form and refresh the page
+        st.session_state['need_rerun'] = True
+
+    # Conditional rerun to avoid recursion
+    if 'need_rerun' in st.session_state and st.session_state['need_rerun']:
+        # Clear the flag before rerunning to prevent infinite loop
+        del st.session_state['need_rerun']
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
