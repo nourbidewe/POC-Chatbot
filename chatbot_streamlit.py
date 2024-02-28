@@ -15,7 +15,7 @@ answer_model = genai.GenerativeModel("gemini-pro")
 
 # Load data from Excel (replace with your actual file path)
 try:
-    df = pd.read_excel("/Users/user/Desktop/Chatbot/Data Sources.xlsx")
+    df = pd.read_excel("Data Sources.xlsx")
 except FileNotFoundError:
     st.error("Data file not found. Please ensure the file path is correct.")
 # print(df.columns)
