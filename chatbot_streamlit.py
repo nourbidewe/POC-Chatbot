@@ -65,14 +65,21 @@ def main():
     if 'qna_history' not in st.session_state:
         st.session_state['qna_history'] = []
     
-    # Initialize the input field value in session state if not already set
-    if 'query_input' not in st.session_state:
-        st.session_state['query_input'] = ''
+    # Initialize a flag in session state to clear the input field
+    if 'clear_input' not in st.session_state:
+        st.session_state['clear_input'] = False
+    
+    # Check the flag before creating the input field
+    if st.session_state['clear_input']:
+        query_input_value = ''
+        st.session_state['clear_input'] = False  # Reset the flag
+    else:
+        query_input_value = st.session_state.get('query_input', '')
     
     # Using a form for the input and submit button
     with st.form(key='question_form'):
-        # Use the session state for the value of the input field
-        query_input = st.text_input("Enter your question:", value=st.session_state['query_input'], key="query_input")
+        # Now the input field value is controlled by the query_input_value variable
+        query_input = st.text_input("Enter your question:", value=query_input_value, key="query_input")
         submit_button = st.form_submit_button('Submit')
     
     if submit_button and query_input:
@@ -82,11 +89,11 @@ def main():
         # Append the question and response to the history
         st.session_state['qna_history'].append((query_input, response))
     
-        # Reset the input field in the session state to clear it
-        st.session_state['query_input'] = ''
+        # Set the flag to clear the input on the next run
+        st.session_state['clear_input'] = True
     
-        # Indicate that a rerun is needed to clear the form and refresh the page
-        st.session_state['need_rerun'] = True
+        # Refresh the page to reflect changes
+        st.experimental_rerun()
     
     # Display the history of Q&A at the bottom if there are previous Q&As
     if st.session_state['qna_history']:
@@ -94,12 +101,6 @@ def main():
             st.write(f"User Question\n: {q}")
             st.write(f"POC Chatbot\n: {a}")
             st.write("-----------------------------")  # Just a separator for readability
-    
-    # Conditional rerun to avoid recursion
-    if 'need_rerun' in st.session_state and st.session_state['need_rerun']:
-        # Clear the flag before rerunning to prevent infinite loop
-        del st.session_state['need_rerun']
-        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
