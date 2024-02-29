@@ -99,8 +99,8 @@ def main():
     if st.session_state['qna_history']:
         for q, a in st.session_state['qna_history']:
             st.markdown(f"<span style='color: gray'>User Question:</span><br>", unsafe_allow_html=True)
-            st.markdown(f"<span style='color: gray'>POC Chatbot:</span><br>", unsafe_allow_html=True)
             st.write(f"{q}")
+            st.markdown(f"<span style='color: gray'>POC Chatbot:</span><br>", unsafe_allow_html=True)
             st.write(f"{a}")
             st.write("-----------------------------")  # Just a separator for readability
 
