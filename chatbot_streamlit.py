@@ -34,18 +34,30 @@ def query_similarity_score(query, vector):
 def most_similar_document(query): 
     df['embeddings']= df['Descriprion'].apply(embed_text)
     df['similarity']= df['embeddings'].apply(lambda vector: query_similarity_score(query, vector))
-    title= df.sort_values('similarity', ascending= False)[['title', 'Descriprion']].iloc[0]['title']
-    text= df.sort_values('similarity', ascending= False)[['title', 'Descriprion']].iloc[0]['Descriprion']
-    return title, text
+    df_sorted = df.sort_values("similarity", ascending=False)
+
+    # Get top similarity score
+    top_similarity = df_sorted.iloc[0]["similarity"]
+
+    # Filter documents meeting the similarity threshold 
+    similar_documents = df_sorted[df_sorted["similarity"] >= top_similarity - 0.3]
+    
+    return list(zip(similar_documents["title"], similar_documents["Descriprion"]))
 
 def RAG(query):
-    title, text= most_similar_document(query)
-    model= genai.GenerativeModel('gemini-pro')
-    prompt= f"answer this query:\n {query}. \nOnly use this context to answer:\n {title} :{text}"
-    #sourcing
-    config= genai.types.GenerationConfig(temperature= 0.6,max_output_tokens= 8192, top_k= 10)
-    response= model.generate_content(prompt,generation_config=config)
-#     return f'Source Doc Title: {title}\n\n {response.text}'
+    documents = most_similar_document(query)  # This will return a list of tuples [(title, description), ...]
+
+    if len(documents) == 1:
+        # When there's only one document, unpack the tuple
+        title, text = documents[0]
+        prompt = f"Answer this query:\n{query}.\nOnly use this context to answer:\n{title}: {text}"
+    else:
+        # For multiple documents, combine their titles and texts for the prompt
+        combined_context = "\n".join(f"{title}: {text}" for title, text in documents)
+        prompt = f"Answer this query:\n{query}.\nOnly use this context to answer:\n{combined_context}"
+    model = genai.GenerativeModel("gemini-pro")
+    config = genai.types.GenerationConfig(temperature=0.6, max_output_tokens=8192, top_k=10)
+    response = model.generate_content(prompt, generation_config=config)
     return response.text
 
 def main():
