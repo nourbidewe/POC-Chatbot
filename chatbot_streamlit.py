@@ -90,8 +90,8 @@ def main():
     # Conditional rerun to avoid recursion
     if 'need_rerun' in st.session_state and st.session_state['need_rerun']:
     # Clear the flag before rerunning to prevent infinite loop
-    del st.session_state['need_rerun']
-    st.experimental_rerun()
+        del st.session_state['need_rerun']
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
