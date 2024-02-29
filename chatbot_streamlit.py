@@ -65,9 +65,14 @@ def main():
     if 'qna_history' not in st.session_state:
         st.session_state['qna_history'] = []
     
+    # Initialize the input field value in session state if not already set
+    if 'query_input' not in st.session_state:
+        st.session_state['query_input'] = ''
+    
     # Using a form for the input and submit button
     with st.form(key='question_form'):
-        query_input = st.text_input("Enter your question:", '', key="query_input")
+        # Use the session state for the value of the input field
+        query_input = st.text_input("Enter your question:", value=st.session_state['query_input'], key="query_input")
         submit_button = st.form_submit_button('Submit')
     
     if submit_button and query_input:
@@ -76,6 +81,9 @@ def main():
         
         # Append the question and response to the history
         st.session_state['qna_history'].append((query_input, response))
+    
+        # Reset the input field in the session state to clear it
+        st.session_state['query_input'] = ''
     
         # Indicate that a rerun is needed to clear the form and refresh the page
         st.session_state['need_rerun'] = True
@@ -89,7 +97,7 @@ def main():
     
     # Conditional rerun to avoid recursion
     if 'need_rerun' in st.session_state and st.session_state['need_rerun']:
-    # Clear the flag before rerunning to prevent infinite loop
+        # Clear the flag before rerunning to prevent infinite loop
         del st.session_state['need_rerun']
         st.experimental_rerun()
 
