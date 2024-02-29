@@ -65,6 +65,15 @@ def main():
     if 'qna_history' not in st.session_state:
         st.session_state['qna_history'] = []
     
+    # Display the history of Q&A at the top if there are previous Q&As
+    if st.session_state['qna_history']:
+        for q, a in st.session_state['qna_history']:
+            st.markdown(f"<span style='color: gray'>User Question:</span><br>", unsafe_allow_html=True)
+            st.write(f"{q}")
+            st.markdown(f"<span style='color: gray'>POC Chatbot:</span><br>", unsafe_allow_html=True)
+            st.write(f"{a}")
+            st.write("-----------------------------")  # Just a separator for readability
+    
     # Initialize a flag in session state to clear the input field
     if 'clear_input' not in st.session_state:
         st.session_state['clear_input'] = False
@@ -76,7 +85,7 @@ def main():
     else:
         query_input_value = st.session_state.get('query_input', '')
     
-    # Using a form for the input and submit button
+    # Using a form for the input and submit button at the bottom
     with st.form(key='question_form'):
         # Now the input field value is controlled by the query_input_value variable
         query_input = st.text_input("Enter your question:", value=query_input_value, key="query_input")
@@ -86,7 +95,7 @@ def main():
         # Call the RAG function to get a response for the input question
         response = RAG(query_input)
         
-        # Append the question and response to the history
+        # Append the question and response to the history at the beginning of the list
         st.session_state['qna_history'].append((query_input, response))
     
         # Set the flag to clear the input on the next run
@@ -94,15 +103,49 @@ def main():
     
         # Refresh the page to reflect changes
         st.experimental_rerun()
+
+    # st.title("GASTAT/SADAIA Chatbot")
+    # if 'qna_history' not in st.session_state:
+    #     st.session_state['qna_history'] = []
     
-    # Display the history of Q&A at the bottom if there are previous Q&As
-    if st.session_state['qna_history']:
-        for q, a in st.session_state['qna_history']:
-            st.markdown(f"<span style='color: gray'>User Question:</span><br>", unsafe_allow_html=True)
-            st.write(f"{q}")
-            st.markdown(f"<span style='color: gray'>POC Chatbot:</span><br>", unsafe_allow_html=True)
-            st.write(f"{a}")
-            st.write("-----------------------------")  # Just a separator for readability
+    # # Initialize a flag in session state to clear the input field
+    # if 'clear_input' not in st.session_state:
+    #     st.session_state['clear_input'] = False
+    
+    # # Check the flag before creating the input field
+    # if st.session_state['clear_input']:
+    #     query_input_value = ''
+    #     st.session_state['clear_input'] = False  # Reset the flag
+    # else:
+    #     query_input_value = st.session_state.get('query_input', '')
+    
+    # # Using a form for the input and submit button
+    # with st.form(key='question_form'):
+    #     # Now the input field value is controlled by the query_input_value variable
+    #     query_input = st.text_input("Enter your question:", value=query_input_value, key="query_input")
+    #     submit_button = st.form_submit_button('Submit')
+    
+    # if submit_button and query_input:
+    #     # Call the RAG function to get a response for the input question
+    #     response = RAG(query_input)
+        
+    #     # Append the question and response to the history
+    #     st.session_state['qna_history'].append((query_input, response))
+    
+    #     # Set the flag to clear the input on the next run
+    #     st.session_state['clear_input'] = True
+    
+    #     # Refresh the page to reflect changes
+    #     st.experimental_rerun()
+    
+    # # Display the history of Q&A at the bottom if there are previous Q&As
+    # if st.session_state['qna_history']:
+    #     for q, a in st.session_state['qna_history']:
+    #         st.markdown(f"<span style='color: gray'>User Question:</span><br>", unsafe_allow_html=True)
+    #         st.write(f"{q}")
+    #         st.markdown(f"<span style='color: gray'>POC Chatbot:</span><br>", unsafe_allow_html=True)
+    #         st.write(f"{a}")
+    #         st.write("-----------------------------")  # Just a separator for readability
 
 if __name__ == "__main__":
     main()
