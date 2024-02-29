@@ -98,8 +98,10 @@ def main():
     # Display the history of Q&A at the bottom if there are previous Q&As
     if st.session_state['qna_history']:
         for q, a in st.session_state['qna_history']:
-            st.write(f"User Question\n: {q}")
-            st.write(f"POC Chatbot\n: {a}")
+            st.write(f"User Question\n:")
+            st.write(f"{q}")
+            st.write(f"POC Chatbot\n:")
+            st.write(f"{a}")
             st.write("-----------------------------")  # Just a separator for readability
 
 if __name__ == "__main__":
