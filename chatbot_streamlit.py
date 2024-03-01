@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
+import nltk
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 import google.generativeai as genai
-import nltk
-nltk.download('wordnet')
+
 
 apikey = "AIzaSyCEbbTpMCxMid1hCDRjdAu93OsrmTNnckY"
 try:
