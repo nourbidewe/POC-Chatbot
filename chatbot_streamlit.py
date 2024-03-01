@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import re
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
 import google.generativeai as genai
 
 apikey = "AIzaSyCEbbTpMCxMid1hCDRjdAu93OsrmTNnckY"
