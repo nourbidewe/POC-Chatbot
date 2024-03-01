@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import nltk
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet
+# import nltk
+# nltk.download('wordnet')
+# nltk.download('omw-1.4')
+# from nltk.stem import WordNetLemmatizer
+# from nltk.corpus import wordnet
 import google.generativeai as genai
 
 
@@ -29,13 +29,13 @@ def text_preprocess(text):
     text = text.lower()
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
     
-    lemmatizer = WordNetLemmatizer()
-    words = text.split()
-    lemmatized_words = [lemmatizer.lemmatize(word) for word in words]
+    # lemmatizer = WordNetLemmatizer()
+    # words = text.split()
+    # lemmatized_words = [lemmatizer.lemmatize(word) for word in words]
     
-    lemmatized_text = ' '.join(lemmatized_words)
+    # lemmatized_text = ' '.join(lemmatized_words)
     
-    return lemmatized_text
+    return text
     
 def embed_text(text):
     return genai.embed_content(model= 'models/embedding-001',
