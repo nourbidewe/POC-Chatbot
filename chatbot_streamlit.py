@@ -59,21 +59,36 @@ def most_similar_document(query):
     
     return list(zip(similar_documents["title"], similar_documents["Descriprion"]))
     
+# def RAG(query):
+
+#     documents = most_similar_document(query)  
+#     if len(documents) == 1:
+#         title, text = documents[0]
+#         prompt = f"Answer this query:\n{query}.\nOnly use this context to answer:\n{title}: {text}"
+#     else:
+#         combined_context = "\n".join(f"{title}: {text}" for title, text in documents)
+#         prompt = f"Answer this query:\n{query}.\nOnly use this context to answer:\n{combined_context}"
+
+#     model = genai.GenerativeModel("gemini-pro")
+#     config = genai.types.GenerationConfig(temperature=0.6, max_output_tokens=8192, top_k=10)
+#     response = model.generate_content(prompt, generation_config=config)
+#     return response.text
+
 def RAG(query):
-
+    history=[]
     documents = most_similar_document(query)  
-    if len(documents) == 1:
-        title, text = documents[0]
-        prompt = f"Answer this query:\n{query}.\nOnly use this context to answer:\n{title}: {text}"
+    if len(history) > 0 and len(documents) == 1:
+        combined_context = "\n".join([f"{title}: {text}" for title, text in documents] + history)
     else:
+        # Use the original combined_context for first query
         combined_context = "\n".join(f"{title}: {text}" for title, text in documents)
-        prompt = f"Answer this query:\n{query}.\nOnly use this context to answer:\n{combined_context}"
-
+        prompt = f"Answer this query:\n{query}.\nBased on our previous conversation:\n{combined_context}"
     model = genai.GenerativeModel("gemini-pro")
+    chat= model.start_chat()
     config = genai.types.GenerationConfig(temperature=0.6, max_output_tokens=8192, top_k=10)
-    response = model.generate_content(prompt, generation_config=config)
+    response = chat.send_message(prompt, generation_config=config)
+    history.append(f"Query: {query}\nAnswer: {response.text}")
     return response.text
-
 
 def main():
     st.title("GASTAT/SADAIA Chatbot")
