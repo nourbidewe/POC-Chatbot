@@ -101,7 +101,7 @@ def RAG(query):
     return response.text
 
 def main():
-    st.title("GASTAT/SADAIA Chatbot") #change the name
+    st.title("GASTAT/SADAIA Chatbot")
     if 'qna_history' not in st.session_state:
         st.session_state['qna_history'] = []
     
