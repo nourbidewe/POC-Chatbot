@@ -82,7 +82,17 @@ def RAG(query):
     else:
         # Use the original combined_context for first query
         combined_context = "\n".join(f"{title}: {text}" for title, text in documents)
-        prompt = f"Answer this query:\n{query}.\nBased on our previous conversation:\n{combined_context}"
+        # prompt = f"Answer this query:\n{query}.\nBased on our previous conversation:\n{combined_context}"
+         prompt = f"""You are a helpful and informative bot that answers questions using text from the reference passage included below. \
+  Be sure to respond in a complete sentence, being comprehensive, including all relevant background information. \
+  However, you are talking to a non-technical audience, so be sure to break down complicated concepts and \
+  strike a friendly and converstional tone. \
+  If the passage is irrelevant to the answer, you may ignore it.
+  QUESTION: '{query}'
+  PASSAGE: '{documents}'
+
+  ANSWER:
+  """
     model = genai.GenerativeModel("gemini-pro")
     chat= model.start_chat()
     config = genai.types.GenerationConfig(temperature=0.6, max_output_tokens=8192, top_k=10)
