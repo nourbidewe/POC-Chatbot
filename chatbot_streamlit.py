@@ -55,7 +55,7 @@ def most_similar_document(query):
 
     top_similarity = df_sorted.iloc[0]["similarity"]
 
-    similar_documents = df_sorted[df_sorted["similarity"] >= top_similarity - 0.3]
+    similar_documents = df_sorted[df_sorted["similarity"] >= top_similarity - 0.1]
     
     return list(zip(similar_documents["title"], similar_documents["Descriprion"]))
     
