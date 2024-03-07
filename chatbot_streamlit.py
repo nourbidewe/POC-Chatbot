@@ -41,36 +41,36 @@ def text_preprocess(text):
     # return lemmatized_text
     return text
 
-def make_links_clickable(text):
-    url_pattern = r'(https?://[^\s/<]+(?:/[^\s<]*)?)'
+# def make_links_clickable(text):
+#     url_pattern = r'(https?://[^\s/<]+(?:/[^\s<]*)?)'
 
-    seen_urls = set()
+#     seen_urls = set()
 
-    def replace_url(match):
-        url = match.group(1)
-        following_text = text[match.end():match.end() + 4]
-        space_after_url = " " if following_text.startswith("<br>") else ""
-        if url not in seen_urls:
-            seen_urls.add(url)
-            return f'<a href="{url}" target="_blank">{url}</a>{space_after_url}'
-        return url
+#     def replace_url(match):
+#         url = match.group(1)
+#         following_text = text[match.end():match.end() + 4]
+#         space_after_url = " " if following_text.startswith("<br>") else ""
+#         if url not in seen_urls:
+#             seen_urls.add(url)
+#             return f'<a href="{url}" target="_blank">{url}</a>{space_after_url}'
+#         return url
 
-    text = re.sub(url_pattern, replace_url, text)
-    return text
+#     text = re.sub(url_pattern, replace_url, text)
+#     return text
 
 
-def format_response_for_web(text):
-    text = text.replace('\n', '<br>') 
-    bold_pattern = re.compile(r'\*\*(.*?)\*\*')
-    text = bold_pattern.sub(r'<strong>\1</strong>', text)
-    asterisk_items = re.findall(r'\* ([^\*]+)', text)
-    if asterisk_items:
-        for item in set(asterisk_items):  
-            text = text.replace(f"* {item}", f"<li>{item}</li>")
-        text = text.replace("<li>", "<ul><li>", 1)  
-        text = re.sub(r'(<li>[^<]+</li>)', r'\1</ul>', text, 1) 
+# def format_response_for_web(text):
+#     text = text.replace('\n', '<br>') 
+#     bold_pattern = re.compile(r'\*\*(.*?)\*\*')
+#     text = bold_pattern.sub(r'<strong>\1</strong>', text)
+#     asterisk_items = re.findall(r'\* ([^\*]+)', text)
+#     if asterisk_items:
+#         for item in set(asterisk_items):  
+#             text = text.replace(f"* {item}", f"<li>{item}</li>")
+#         text = text.replace("<li>", "<ul><li>", 1)  
+#         text = re.sub(r'(<li>[^<]+</li>)', r'\1</ul>', text, 1) 
     
-    return text
+#     return text
 
 def embed_text(text):
     return genai.embed_content(model= 'models/embedding-001',
@@ -124,8 +124,8 @@ def RAG(query):
     config = genai.types.GenerationConfig(temperature=0.6, max_output_tokens=8192, top_k=10)
     response = chat.send_message(prompt, generation_config=config)
     history.append(f"Query: {query}\nAnswer: {response.text}")
-    # return response.text
-    return format_response_for_web(response.text)
+    return response.text
+    # return format_response_for_web(response.text)
 
 
 def main():
