@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-df= pd.read_excel('/home/NourAlBidewe/mysite/GASTAT scraped links.xlsx')
+df= pd.read_excel('GASTAT scraped links.xlsx')
 df['Web Link (PDF)']= df['Web Link (PDF)'].fillna('Not Available')
 
 
