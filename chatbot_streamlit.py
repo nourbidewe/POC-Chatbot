@@ -2,130 +2,215 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
+import nltk
+nltk.download('wordnet')
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
 import google.generativeai as genai
-# import nltk
-# nltk.download('wordnet', quiet=True)
-# from nltk.stem import WordNetLemmatizer
-# from nltk.corpus import wordnet
+from io import StringIO
+import ast
+import warnings
 
-apikey = "AIzaSyCEbbTpMCxMid1hCDRjdAu93OsrmTNnckY"
+# Suppress all warnings
+warnings.filterwarnings('ignore')
 
-def read_excel(path):
-    try:
-        df = pd.read_excel(path)
-        return df
-    except FileNotFoundError:
-        print("Data file not found. Please ensure the file path is correct.")
-    
-df= read_excel("Data Sources (new).xlsx")
 
-# df2= read_excel('/Users/user/Desktop/Chatbot/Data Sources (1).xlsx')
+df= pd.read_excel('/home/NourAlBidewe/mysite/GASTAT scraped links.xlsx')
+df['Web Link (PDF)']= df['Web Link (PDF)'].fillna('Not Available')
 
-try:
-    genai.configure(api_key=apikey)
-    embed_model = genai.GenerativeModel("models/embedding-001")
-    answer_model = genai.GenerativeModel("gemini-pro")
-except Exception as e:
-    print(f"Error configuring API: {e}")
-    
-def text_preprocess(text):
-    text = text.lower()
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-    
-    # lemmatizer = WordNetLemmatizer()
-    # words = text.split()
-    # lemmatized_words = [lemmatizer.lemmatize(word) for word in words]
-    
-    # lemmatized_text = ' '.join(lemmatized_words)
-    
-    # return lemmatized_text
+
+month_mapping = {
+    "Jan": "January",
+    "Feb": "February",
+    "Mar": "March",
+    "Apr": "April",
+    "May": "May",
+    "Jun": "June",
+    "Jul": "July",
+    "Aug": "August",
+    "Sep": "September",
+    "Oct": "October",
+    "Nov": "November",
+    "Dec": "December"
+}
+
+def replace_month_abbreviations_with_full_names(text):
+    for abbrev, full in month_mapping.items():
+        text = re.sub(r'\b' + abbrev + r'\b', full, text, flags=re.IGNORECASE)
     return text
 
-# def make_links_clickable(text):
-#     url_pattern = r'(https?://[^\s/<]+(?:/[^\s<]*)?)'
+def create_all_info(row):
+    web_name = str(row['Web Name']).lower()
+    report_period = str(row['Report Period']).lower()
+    report_period = report_period.replace("  ", " ")
+    report_period = replace_month_abbreviations_with_full_names(report_period).lower()
+    periodicity = str(row['Periodicity'])
+    web_name_with_period = f"{web_name} {report_period}" if report_period not in web_name else web_name
+    return f"{web_name_with_period} - Periodicty: {periodicity}"
 
-#     seen_urls = set()
+def make_links_clickable(text):
+    url_pattern = r'(https?://[^\s/<]+(?:/[^\s<]*)?)'
 
-#     def replace_url(match):
-#         url = match.group(1)
-#         following_text = text[match.end():match.end() + 4]
-#         space_after_url = " " if following_text.startswith("<br>") else ""
-#         if url not in seen_urls:
-#             seen_urls.add(url)
-#             return f'<a href="{url}" target="_blank">{url}</a>{space_after_url}'
-#         return url
+    seen_urls = set()
 
-#     text = re.sub(url_pattern, replace_url, text)
-#     return text
+    def replace_url(match):
+        url = match.group(1)
+        following_text = text[match.end():match.end() + 4]
+        space_after_url = " " if following_text.startswith("<br>") else ""
+        if url not in seen_urls:
+            seen_urls.add(url)
+            return f'<a href="{url}" target="_blank">{url}</a>{space_after_url}'
+        return url
 
+    text = re.sub(url_pattern, replace_url, text)
+    return text
 
-# def format_response_for_web(text):
-#     text = text.replace('\n', '<br>') 
-#     bold_pattern = re.compile(r'\*\*(.*?)\*\*')
-#     text = bold_pattern.sub(r'<strong>\1</strong>', text)
-#     asterisk_items = re.findall(r'\* ([^\*]+)', text)
-#     if asterisk_items:
-#         for item in set(asterisk_items):  
-#             text = text.replace(f"* {item}", f"<li>{item}</li>")
-#         text = text.replace("<li>", "<ul><li>", 1)  
-#         text = re.sub(r'(<li>[^<]+</li>)', r'\1</ul>', text, 1) 
-    
-#     return text
+def text_preprocess(text):
+    # Convert text to lowercase
+    text = text.lower()
 
-def embed_text(text):
-    return genai.embed_content(model= 'models/embedding-001',
-                                     content= text,
-                                    task_type= 'retrieval_document')['embedding']
+    # Remove all non-alphabetic and non-numerical characters
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
 
-def query_similarity_score(query, vector):
-    query_embedding= embed_text(query)
-    return np.dot(query_embedding, vector)
+#     Initialize the WordNetLemmatizer
+    lemmatizer = WordNetLemmatizer()
 
-def most_similar_document(query): 
-    df['desc_pre']= df['Description'].apply(text_preprocess)
+    # Lemmatize each word
+    # Split the text into words for lemmatization
+    words = text.split()
+    lemmatized_words = [lemmatizer.lemmatize(word) for word in words]
+
+    # Join the lemmatized words back into a single string
+    lemmatized_text = ' '.join(lemmatized_words)
+
+    return text
+def model_function(query):
+    # reding data and creating all info column
+    df['all_info'] = df.apply(create_all_info, axis=1)
+
+    # Query and Data preprocesssing
+    df['all_info_preprocessed']= df['all_info'].apply(text_preprocess)
     query= text_preprocess(query)
-    df['embeddings']= df['desc_pre'].apply(embed_text)
-    df['similarity']= df['embeddings'].apply(lambda vector: query_similarity_score(query, vector))
-    df_sorted = df.sort_values("similarity", ascending=False)
 
-    top_similarity = df_sorted.iloc[0]["similarity"]
+    # Model Def
+    #api configurations
+    apikey= 'AIzaSyCEbbTpMCxMid1hCDRjdAu93OsrmTNnckY'
+    genai.configure(api_key= apikey)
 
-    similar_documents = df_sorted[df_sorted["similarity"] >= top_similarity - 0.3]
-    
-    # return list(zip(similar_documents["title"], similar_documents["Description"]))
-    return list(zip(similar_documents["Description"]))
+    # Set up the model
+    generation_config = {
+      "temperature": 0.5,
+      "top_p": 1,
+      "top_k": 32,
+      "max_output_tokens": 8192,
+    }
 
-def RAG(query):
+    safety_settings = [
+      {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+      }
+    ]
+
+    # Model calling
+    model= genai.GenerativeModel(model_name = 'gemini-pro', generation_config = generation_config,
+                              safety_settings = safety_settings)
+
+    prompt= f"""You are an expert in converting English questions to python code!
+        The dataframe has the name df with the following columns: Web Name, Web Link (XLSX), Web Link (PDF), all_info and all_info_preprocessed
+        You will structure the python code based on the keywords available in the asked question, and serach for their match in the web_name column in the matched rows,
+        return the web_name, xlsx_link and pdf_link
+
+        for example, Question: do we have data for Riyadh in 2023?
+        the keywords will be Riyadh and 2023 and the python code is:\n
+import pandas as pd
+filtered_data = df[(df['Web Name'].str.contains('Riyadh')) & (df['Web Name'].str.contains('2023'))]
+filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
+
+        another example, Question: retrieve the data available for prices?
+        The keyword should be price and the python code is:
+import pandas as pd
+filtered_data = df[df['Web Name'].str.contains('price')]
+filtered_data['Report Period'] = pd.to_datetime(filtered_data['Report Period'])
+filtered_data = filtered_data.sort_values(by=['Web Name', 'Report Period'], ascending=[True, False])
+filtered_data = filtered_data.drop_duplicates(subset=['Web Name'], keep='first')
+filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
+
+        if the question after it asked to retrive all of the years then your answer should be
+import pandas as pd
+filtered_data = df[df['Web Name'].str.contains('price')]
+filtered_data['Report Period'] = pd.to_datetime(filtered_data['Report Period'])
+filtered_data = filtered_data.sort_values(by='Report Period', ascending=False)
+filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
+
+        don't add a print code to your answer
+        always import the libraries required
+        if the text include greeting then reply with greetings else always start your code with ```python
+        if the query contains greetings only then reply with the greeting don't retrieve data for example if the query is 'Hi' then you should reply with something similar to 'Hi, how can I help you today? I'm a conversational bot powered by Gemini, specialized in retrieving data from GASTAT.'
+
+        make sure your code is syntax error free
+
+        if the query contains list all available data then all the data should be retrieved (the names with their link)
+
+        if the data name has more then one row then return the most recent one, but if the query contains listing them all then you should return all of them
+
+        if the query asked contains a month in number or abbreviated then you have to check for the full name of the month
+
+        Be sure to respond in a complete sentence, being comprehensive, including all relevant background information.
+
+        restirct your answer on the data provided only in the df for example if the query is asking about AlUla region, then you shouldn't return anything since this keyword doesn't exist in the data provided.
+
+        The question/query asked is '{query}'
+        """
     history=[]
-    documents = most_similar_document(query)  
-    if len(history) > 0 and len(documents) == 1:
-        # combined_context = "\n".join([f"{title}: {text}" for title, text in documents] + history)
-        combined_context = "\n".join([f"{text}" for  text in documents] + history)
+    if len(history) > 0:
+        prompt += "\n" + "\n previous conversation: ".join(history)
+    chat = model.start_chat()
+    response = chat.send_message(prompt)
+    history.append(f"Query/Question: {query}\nAnswer: {response.text}")
+    try:
+        # Try to extract Python code from the text
+        code_match = re.search(r'`python(.*?)`', response.text, re.DOTALL)
 
-    else:
-        # Use the original combined_context for first query
-        # combined_context = "\n".join(f"{title}: {text}" for title, text in documents)
-        combined_context = "\n".join(f"{text}" for text in documents)
+        if code_match:
+            code_snippet = code_match.group(1).strip()
+            try:
+                ast.parse(code_snippet)
+            except IndentationError as ie:
+                return (f"Indentation error: {ie}")
+            except SyntaxError as se:
+                return (f"Syntax error: {se}")
+            # Define the local and global context for code execution
+            local_context = {'df': df, 'pd': pd}
+            global_context = {}
+            # Execute the extracted code
+            exec(code_snippet, global_context, local_context)
+            # Construct the text response with links if 'filtered_data' is in local_context
+            if 'filtered_data' in local_context:
+                filtered_data = local_context['filtered_data']
+                if filtered_data.empty:
+                    return 'There is currently no data available on GASTAT for the requested query.'
+                else:
+                    answer = "Below is the data available on GASTAT for the requested query: \n"
 
-        prompt = f"""Answer this query:\n{query}.\nBased on our previous conversation:\n{combined_context}\
-            always provide a link to your answer based on the question and answer and don't write the link twice"""
-#         prompt = f"""You are a helpful and informative bot that answers questions using text from the reference passage included below. \
-#   Be sure to respond in a complete sentence, being comprehensive, including all relevant background information. \
-#   However, you are talking to a non-technical audience, so be sure to break down complicated concepts and \
-#   strike a friendly and converstional tone. \
-#   always provide link or reference to the question asked and don't write the link twice\
-#   If the passage is irrelevant to the answer, you may ignore it.
-#   QUESTION: '{query}'
-#   PASSAGE: '{documents}'
+                    for index, row in filtered_data.iterrows():
+                        data_name = row['all_info']
+                        excel_link = row['Web Link (XLSX)']
+                        pdf_link = row['Web Link (PDF)']
+                        answer += f"""
+Data name: {data_name} \n
+Excel link: {excel_link} \n
+PDF link: {pdf_link} \n
 
-#   ANSWER"""
-    model = genai.GenerativeModel("gemini-pro")
-    chat= model.start_chat()
-    config = genai.types.GenerationConfig(temperature=0.6, max_output_tokens=8192, top_k=10)
-    response = chat.send_message(prompt, generation_config=config)
-    history.append(f"Query: {query}\nAnswer: {response.text}")
-    return response.text
-    # return format_response_for_web(response.text)
+    """
+                    return answer.strip()
+            else:
+                return "Code executed. No output variable 'filtered_data' found."
+        else:
+            # If no Python code is found, return the original text
+            return response.text
+    except Exception as e:
+        return f"An error occurred: {e}"
 
 
 def main():
@@ -155,7 +240,7 @@ def main():
         submit_button = st.form_submit_button('Submit')
     
     if submit_button and query_input:
-        response = RAG(query_input)
+        response = model_function(query_input)
         
         st.session_state['qna_history'].append((query_input, response))
     
