@@ -125,7 +125,7 @@ def model_function(query):
         the keywords will be Riyadh and 2023 and the python code is:\n
 import pandas as pd
 filtered_data = df[(df['Web Name'].str.contains('Riyadh')) & (df['Web Name'].str.contains('2023'))]
-filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
+filtered_data = filtered_data[['Web Name', 'Web Link (XLSX)', 'Web Link (PDF)']]
 
         another example, Question: retrieve the data available for prices?
         The keyword should be price and the python code is:
@@ -134,14 +134,14 @@ filtered_data = df[df['Web Name'].str.contains('price')]
 filtered_data['Report Period'] = pd.to_datetime(filtered_data['Report Period'])
 filtered_data = filtered_data.sort_values(by=['Web Name', 'Report Period'], ascending=[True, False])
 filtered_data = filtered_data.drop_duplicates(subset=['Web Name'], keep='first')
-filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
+filtered_data = filtered_data[['Web Name', 'Web Link (XLSX)', 'Web Link (PDF)']]
 
         if the question after it asked to retrive all of the years then your answer should be
 import pandas as pd
 filtered_data = df[df['Web Name'].str.contains('price')]
 filtered_data['Report Period'] = pd.to_datetime(filtered_data['Report Period'])
 filtered_data = filtered_data.sort_values(by='Report Period', ascending=False)
-filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
+filtered_data = filtered_data[['Web Name', 'Web Link (XLSX)', 'Web Link (PDF)']]
 
         don't add a print code to your answer
         always import the libraries required
@@ -194,7 +194,7 @@ filtered_data = filtered_data[['all_info', 'Web Link (XLSX)', 'Web Link (PDF)']]
                     answer = "Below is the data available on GASTAT for the requested query: \n"
 
                     for index, row in filtered_data.iterrows():
-                        data_name = row['all_info']
+                        data_name = row['Web Name']
                         excel_link = row['Web Link (XLSX)']
                         pdf_link = row['Web Link (PDF)']
                         answer += f"""
